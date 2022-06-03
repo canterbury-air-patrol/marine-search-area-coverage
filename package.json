@@ -1,0 +1,39 @@
+{
+  "name": "@canterbury-air-patrol/marine-search-area-coverage",
+  "version": "0.0.1",
+  "description": "Marine Search Area Coverage Calculator",
+  "main": "marine-search-area-coverage.js",
+  "scripts": {
+    "build": "esbuild marinesac.js --bundle --outdir=out",
+    "check": "jshint *.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "http-server -a localhost -p 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/canterbury-air-patrol/marine-search-area-coverage.git"
+  },
+  "keywords": [
+    "marine",
+    "sar",
+    "search",
+    "area",
+    "coverage"
+  ],
+  "author": "Scott Parlane",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/canterbury-air-patrol/marine-search-area-coverage/issues"
+  },
+  "homepage": "https://github.com/canterbury-air-patrol/marine-search-area-coverage#readme",
+  "dependencies": {
+    "@canterbury-air-patrol/marine-sweep-width-data": "file:../marine-sweep-width-data",
+    "bootstrap": "^5.1.3",
+    "jquery": "^3.6.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.14.42",
+    "http-server": "^14.1.1",
+    "jshint": "^2.13.4"
+  }
+}

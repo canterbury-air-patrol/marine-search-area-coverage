@@ -1,5 +1,7 @@
 import { marine_sweep_widths, marine_sweep_width_weather_corrections as weather_corrections } from '@canterbury-air-patrol/marine-sweep-width-data';
-import $ from 'jquery';
+
+import React from 'react';
+import PropTypes from 'prop-types';
 
 class MarineSAC {
     constructor(column, asset_type)
@@ -13,7 +15,7 @@ class MarineSAC {
         this.fatigue = false;
         this.corrected_sweep_width = 0;
         this.practical_track_spacing = 0;
-        this.search_area = 0;
+        this.search_area = 144;
         this.search_hours = 0;
         this.available_search_hours = 0;
         this.modified_area = 0;
@@ -22,277 +24,448 @@ class MarineSAC {
 
     recaclculate()
     {
-        this.asset_speed = $("#" + this.asset_type + "_search_speed").val();
-        this.wu = parseFloat($("#wu_" + this.column).text());
-        this.fw = parseFloat($("#fw_" + this.column).text());
-        this.fatigue = $("#fatigue").is(':checked');
-        this.practical_track_spacing = parseFloat($("#practical_track_spacing_" + this.column).val());
-        this.search_area = parseInt($("#search_area_" + this.column).val());
-        this.available_search_hours = parseInt($("#available_search_hours_" + this.column).val());
-
         this.sweep_width = this.wu * this.fw;
-        $("#sweep_width_" + this.column).text(this.sweep_width);
         if (this.fatigue)
         {
-            $("#ff_" + this.column).text("0.9");
             this.corrected_sweep_width = this.sweep_width * 0.9;
         }
         else
         {
-            $("#ff_" + this.column).text("1.0");
             this.corrected_sweep_width = this.sweep_width;
         }
-        $("#corrected_sweep_width_" + this.column).text(this.corrected_sweep_width);
-
         this.search_hours = this.search_area / (this.asset_speed * this.practical_track_spacing);
-        $("#search_hours_total_" + this.column).text(this.search_hours);
-
         this.modified_area = this.practical_track_spacing * this.asset_speed * this.available_search_hours;
-        $("#practical_search_area_" + this.column).text(this.modified_area);
-
         this.whole_area_practical_track_spacing = this.search_area / (this.available_search_hours * this.asset_speed);
-        $("#achievable_track_spacing_" + this.column).text(this.whole_area_practical_track_spacing);
     }
 }
 
 let table_rows = [
     {
         'display_name': 'Uncorrected Sweep Width (Wu) `NM`',
-        'id_prefix': 'wu',
+        'column_name': 'wu',
     },
     {
         'display_name': 'Weather Corrected Factor (Fw)',
-        'id_prefix': 'fw',
+        'column_name': 'fw',
     },
     {
         'display_name': 'Sweep Width (W) (Wu x Fw)',
-        'id_prefix': 'sweep_width',
+        'column_name': 'sweep_width',
     },
     {
         'display_name': 'Fatigue Factor (Ff)',
-        'id_prefix': 'ff',
+        'column_name': 'fatigue',
     },
     {
         'display_name': 'Corrected Sweep Width (W X Ff)',
-        'id_prefix': 'corrected_sweep_width',
+        'column_name': 'corrected_sweep_width',
     },
     {
         'display_name': 'Practical Track Spacing `NM`',
-        'id_prefix': 'practical_track_spacing',
+        'column_name': 'practical_track_spacing',
         'input': true,
         'input_type': 'number',
     },
     {
         'display_name': 'Search Area',
-        'id_prefix': 'search_area',
+        'column_name': 'search_area',
         'input': true,
         'input_type': 'number',
-        'input_default': 144,
     },
     {
         'display_name': 'Search Hours (T) Total',
-        'id_prefix': 'search_hours_total',
+        'column_name': 'search_hours',
     },
     {
         'display_name': 'Available Search Hours',
-        'id_prefix': 'available_search_hours',
+        'column_name': 'available_search_hours',
         'input': true,
         'input_type': 'number',
     },
     {
         'display_name': 'Modified Area at Practical Spacing in Available Hours',
-        'id_prefix': 'practical_search_area',
+        'column_name': 'modified_area',
     },
     {
         'display_name': 'Track Spacing for Whole Area in Available Time',
-        'id_prefix': 'achievable_track_spacing',
+        'column_name': 'whole_area_practical_track_spacing',
     },
 ];
 
-let input_rows = [
-    {
-        'display_name': 'Target Description',
-        'form_field': 'target_description',
-        'input_type': 'text',
-    },
-    {
-        'display_name': 'Meteorological Visibility (km)',
-        'form_field': 'met_visibility',
-        'input_type': 'number',
-    },
-    {
-        'display_name': 'Wind Speed (knots)',
-        'form_field': 'wind_speed',
-        'input_type': 'number',
-    },
-    {
-        'display_name': 'Sea Height (meters)',
-        'form_field': 'sea_height',
-        'input_type': 'number',
-    },
-    {
-        'display_name': 'Boat Search Speed (knots)',
-        'form_field': 'Boat_search_speed',
-        'input_type': 'number',
-    },
-    {
-        'display_name': 'Aircraft Search Speed (knots)',
-        'form_field': 'Aircraft_search_speed',
-        'input_type': 'number',
-    },
-    {
-        'display_name': 'Target Type',
-        'form_field': 'target_type',
-        'input_type': 'select',
-    },
-    {
-        'display_name': 'Fatigue',
-        'form_field': 'fatigue',
-        'input_type': 'checkbox',
-    },
-];
+class WeatherDataTable extends React.Component {
+    constructor(props) {
+        super(props);
+        this.wind_speed = 0;
+        this.sea_height = 0;
 
-export class MarineSACTable {
-    constructor(input_table_id, table_id)
-    {
-        this.input_table_id = input_table_id;
-        this.table_id = table_id;
-        this.columns = [new MarineSAC("8ft", "Boat"), new MarineSAC("14ft", "Boat"), new MarineSAC("500ft", "Aircraft"), new MarineSAC("1000ft", "Aircraft")];
+        this.updateWeatherImpact();
+        this.handleChange = this.handleChange.bind(this);
     }
-    recaclculate()
-    {
-        let visibility = $("#met_visibility").val();
-        let wind_speed = parseInt($("#wind_speed").val());
-        let sea_height = parseFloat($("#sea_height").val());
 
-        // Determine sea/wind impact category
+    updateWeatherImpact() {
+        // Update the sea/wind impact category
         let weather_impact = 'low';
-        if (wind_speed >= 25 || sea_height >= 1.5)
+        if (this.wind_speed >= 25 || this.sea_height >= 1.5)
         {
             weather_impact = 'high';
         }
-        else if(wind_speed >= 15 || sea_height >= 1.0)
+        else if(this.wind_speed >= 15 || this.sea_height >= 1.0)
         {
             weather_impact = 'medium';
         }
+        this.props.weatherImpactChange(weather_impact);
+    }
 
-        // Update the uncorrected sweep width and weather correct factors
-        let target_type = $("#" + this.target_type_id).val();
-        let target_data = marine_sweep_widths[target_type];
-
-        for (let col_idx in this.columns)
+    handleChange(event) {
+        const target = event.target;
+        const value = target.type === 'checkbox' ? target.checked : target.value;
+        const name = target.name;
+        if (name === 'met_visibility')
         {
-            let column_name = this.columns[col_idx].column;
-            let asset_type = this.columns[col_idx].asset_type;
+            this.props.weatherVisibilityChange(value);
+        }
+        else
+        {
+            if (name === 'wind_speed')
+            {
+                this.wind_speed = value;
+            }
+            else if (name === 'sea_height')
+            {
+                this.sea_height = value;
+            }
+            this.updateWeatherImpact();
+        }
+    }
 
-            let visible_distance_data = target_data[asset_type][column_name];
+    render() {
+        return (<form onChange={ this.handleChange }>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><label htmlFor="met_visibility">Meteorological Visibility (NM)</label></td>
+                            <td><input type="number" id="met_visibility" name="met_visibility" defaultValue={this.props.metVisibility}></input></td>
+                        </tr>
+                        <tr>
+                            <td><label htmlFor="wind_speed">Wind Speed (knots)</label></td>
+                            <td><input type="number" id="wind_speed" name="wind_speed" defaultValue={this.wind_speed}></input></td>
+                        </tr>
+                        <tr>
+                            <td><label htmlFor="sea_height">Sea Height (meters)</label></td>
+                            <td><input type="number" id="sea_height" name="sea_height" defaultValue={this.sea_height}></input></td>
+                        </tr>
+                    </tbody>
+                </table>
+        </form>);
+    }
+}
+WeatherDataTable.propTypes = {
+    weatherImpactChange: PropTypes.func.isRequired,
+    weatherVisibilityChange: PropTypes.func.isRequired,
+    metVisibility: PropTypes.number.isRequired,
+}
+
+class TargetTypeSelector extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleChange = this.handleChange.bind(this);
+    }
+
+    handleChange(event) {
+        const target = event.target;
+        const value = target.value;
+
+        this.props.targetTypeChange(value);
+    }
+
+    render() {
+        let select_objects = []
+        for (let idx in this.props.possible_targets)
+        {
+            let target = this.props.possible_targets[idx];
+            select_objects.push(<option key={target} value={target}>{target}</option>);
+        }
+        return (
+        <select defaultValue={this.props.selected} onChange={this.handleChange}>
+            {select_objects}
+        </select>
+        );
+    }
+}
+TargetTypeSelector.propTypes = {
+    possible_targets: PropTypes.array.isRequired,
+    targetTypeChange: PropTypes.func.isRequired,
+    selected: PropTypes.string.isRequired,
+}
+
+class AssetSpeed extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleChange = this.handleChange.bind(this);
+    }
+    handleChange(event) {
+        const target = event.target;
+        const value = target.value;
+        this.props.assetSpeedChange(this.props.assetType, value);
+    }
+    render() {
+        return (
+            <div>
+                <label htmlFor={this.props.assetType + '_speed'}>{this.props.assetType} search speed (knots)</label>
+                <input type="number" name="asset_speed" onChange={this.handleChange} />
+            </div>
+        );
+    }
+}
+AssetSpeed.propTypes = {
+    assetType: PropTypes.string.isRequired,
+    assetSpeedChange: PropTypes.func.isRequired,
+}
+
+class Fatigue extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleChange = this.handleChange.bind(this);
+    }
+    handleChange(event) {
+        const target = event.target;
+        const value = target.checked;
+        this.props.fatigueChanged(value);
+    }
+    render() {
+        return (
+            <div>
+                <label htmlFor='fatigue'>Fatigue</label>
+                <input type="checkbox" name='fatigue' id='fatigue' defaultChecked={this.props.fatigue} onChange={this.handleChange} />
+            </div>
+        );
+    }
+}
+Fatigue.propTypes = {
+    fatigueChanged: PropTypes.func.isRequired,
+    fatigue: PropTypes.bool.isRequired,
+}
+
+class DataTable extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.handleChange = this.handleChange.bind(this);
+    }
+
+    handleChange(event) {
+        const target = event.target;
+        const value = target.value;
+        const name = target.id;
+
+        let id_parts = name.split('_')
+        let asset_id = id_parts.slice(0, 2).join('_')
+        let column_name = id_parts.slice(2).join('_')
+
+        this.props.updateData(asset_id, column_name, value);
+    }
+
+    render() {
+        let rows = [];
+
+        for (let idx in table_rows)
+        {
+            let html_columns = [];
+            html_columns.push (<th key="head" >{ table_rows[idx].display_name }</th>);
+            for (let col_idx in this.props.columns)
+            {
+                let column = this.props.columns[col_idx];
+                if (table_rows[idx].input)
+                {
+                    html_columns.push( (
+                        <td key={ idx + '_' + col_idx }>
+                            <input type={ table_rows[idx].input_type } id={ column.asset_type + '_' + column.column + '_' + table_rows[idx].column_name } defaultValue={ column[table_rows[idx].column_name] } onChange={this.handleChange} />
+                        </td>
+                    ) );
+                }
+                else if(table_rows[idx].column_name === 'fatigue')
+                {
+                    html_columns.push( (
+                        <td key={ idx + '_' + col_idx }>
+                            { column[table_rows[idx].column_name] ? 0.9 : 1.0 }
+                        </td>
+                    ) );
+                }
+                else
+                {
+                    html_columns.push( (
+                        <td key={ idx + '_' + col_idx }>
+                            { column[table_rows[idx].column_name] }
+                        </td>
+                    ) );
+                }
+            }
+
+            rows.push( (
+                <tr key={ idx }>
+                    { html_columns }
+                </tr>
+            ) );
+        }
+
+        return (
+        <form>
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th colSpan="2">Height of Eye</th>
+                        <th colSpan="2">Aircraft</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th>2.4m (8ft)</th>
+                        <th>4.2m (14ft)</th>
+                        <th>500ft</th>
+                        <th>1000ft</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    { rows }
+                </tbody>
+            </table>
+        </form>
+        );
+    }
+}
+DataTable.propTypes = {
+    columns: PropTypes.array.isRequired,
+    updateData: PropTypes.func.isRequired,
+}
+
+
+export class MarineSACTable extends React.Component {
+    constructor(props) {
+        super(props)
+
+        this.possible_targets_list = Object.keys(marine_sweep_widths);
+
+        this.state = {
+            columns: [],
+            target_type: this.possible_targets_list[0],
+            fatigue: false,
+            weather_impact: 'low',
+            asset_speeds: {
+                "Boat": 0,
+                "Aircraft": 0,
+            },
+            met_visibility: 10,
+            practical_track_spacing: {},
+            available_search_hours: {},
+        };
+
+        this.weatherImpactChange = this.weatherImpactChange.bind(this);
+        this.weatherVisibilityChange = this.weatherVisibilityChange.bind(this);
+        this.targetTypeChange = this.targetTypeChange.bind(this);
+        this.assetSpeedChange = this.assetSpeedChange.bind(this);
+        this.fatigueChange = this.fatigueChange.bind(this);
+        this.updateData = this.updateData.bind(this);
+
+        let default_assets = [{asset_type: "Boat", "search_height": "8ft"}, {"asset_type": "Boat", "search_height": "14ft"}, {"asset_type": "Aircraft", "search_height": "500ft"}, {"asset_type": "Aircraft", "search_height": "1000ft"}];
+        for (let asset_idx in default_assets)
+        {
+            let asset = default_assets[asset_idx];
+            this.state.columns.push(new MarineSAC(asset.search_height, asset.asset_type));
+            this.state.practical_track_spacing[`${asset.asset_type}_${asset.search_height}`] = 0;
+            this.state.available_search_hours[`${asset.asset_type}_${asset.search_height}`] = 0;
+        }
+    }
+
+    weatherImpactChange(weather_impact) {
+        this.setState({weather_impact: weather_impact});
+    }
+
+    weatherVisibilityChange(met_visibility) {
+        this.setState( {met_visibility: parseInt(met_visibility) });
+    }
+
+    targetTypeChange(target_type) {
+        this.setState({ target_type: target_type });
+    }
+
+    assetSpeedChange(assetType, speed) {
+        let current_asset_speeds = this.state.asset_speeds;
+        current_asset_speeds[assetType] = speed;
+        this.setState({ asset_speeds: current_asset_speeds });
+    }
+
+    fatigueChange(value) {
+        this.setState({fatigue: value});
+    }
+
+    updateData(asset_id, field_name, value) {
+        let current_data = this.state[field_name];
+        current_data[asset_id] = value;
+        this.setState({[field_name]: current_data});
+    }
+
+    recalculate()
+    {
+        // Update the uncorrected sweep width and weather correct factors
+        let target_data = marine_sweep_widths[this.state.target_type];
+
+        for (let col_idx in this.state.columns)
+        {
+            let column = this.state.columns[col_idx]
+            let search_height = column.column;
+            let asset_type = column.asset_type;
+            let column_name = `${asset_type}_${search_height}`;
+
+            let visible_distance_data = target_data[asset_type][search_height];
 
             let highest_seen_sweep_width = 0;
             let highest_seen_vis = 0;
             for (let idx in visible_distance_data)
             {
                 let data = visible_distance_data[idx];
-                if (data.vis <= visibility && data.vis > highest_seen_vis)
+                if (data.vis <= this.state.met_visibility && data.vis > highest_seen_vis)
                 {
                     highest_seen_sweep_width = data.sw;
                     highest_seen_vis = data.vis;
                 }
             }
-            $("#wu_" + column_name).text(highest_seen_sweep_width);
+            column.wu = highest_seen_sweep_width;
+            column.fw = weather_corrections[target_data.weather_corrections].IAMSAR[this.state.weather_impact];
+            column.fatigue = this.state.fatigue;
 
-            $("#fw_" + column_name).text(weather_corrections[target_data.weather_corrections].IAMSAR[weather_impact]);
-        }
-
-        // Recalculate each column
-        for (let col_idx in this.columns)
-        {
-            this.columns[col_idx].recaclculate();
+            column.asset_speed = this.state.asset_speeds[column.asset_type];
+            column.practical_track_spacing = this.state.practical_track_spacing[column_name];
+            column.available_search_hours = this.state.available_search_hours[column_name];
+            column.recaclculate();
         }
     }
 
-    populate_input_table()
+    render()
     {
-        let sac_table = this;
-
-        for (let idx in input_rows)
-        {
-            let row = input_rows[idx];
-
-            let html = '<tr>';
-
-            html += '<td><label for="' + row.form_field + '">' + row.display_name + '</label></td>';
-            if (row.input_type == 'select')
-            {
-                html += '<td><select id="' + row.form_field + '" name="' + row.form_field + '"></select></td>';
-            }
-            else
-            {
-                html += '<td><input type="' + row.input_type + '" id="' + row.form_field + '" name="' + row.form_field + '"></input></td>';
-            }
-            html += '</tr>';
-            $("#" + this.input_table_id).append(html);
-            $("#" + row.form_field).change(function()
-            {
-                sac_table.recaclculate();
-            });
-        }
-
-        this.target_type_id = 'target_type';
-        this.populate_target_types();
-    }
-
-    populate_target_types()
-    {
-        let sac_table = this;
-
-        for (let idx in marine_sweep_widths)
-        {
-            $("#" + this.target_type_id).append('<option value="' + idx + '">' + idx + '</option>');
-        }
-
-        $("#" + this.target_type_id).change(function() {
-            sac_table.recaclculate();
-        });
-    }
-
-    populate_table()
-    {
-        let sac_table = this;
-
-        let html = '<thead><th></th><th colspan="2">Height of Eye</th><th colspan="2">Aircraft</th></thead><thead><th></th><th>2.4m (8ft)</th><th>4.2m (14ft)</th><th>500ft</th><th>1000ft</th></thead>';
-        $("#" + this.table_id).html(html);
-        for (let idx in table_rows)
-        {
-            let html = '<tr>';
-            html += '<th>' + table_rows[idx].display_name + '</th>';
-            for (let col_idx in this.columns)
-            {
-                let column = this.columns[col_idx];
-                if (table_rows[idx].input)
-                {
-                    html += '<td>';
-                    html += '<input type="' + table_rows[idx].input_type + '" id="' + table_rows[idx].id_prefix + '_' + column.column + '" value="' + table_rows[idx].input_default + '" />';
-                }
-                else
-                {
-                    html += '<td id="' + table_rows[idx].id_prefix + '_' + column.column + '">';
-                }
-                html += '</td>';
-            }
-            $("#" + this.table_id).append(html);
-            if (table_rows[idx].input)
-            {
-                for (let col_idx in this.columns)
-                {
-                    let column = this.columns[col_idx];
-                    $('#' + table_rows[idx].id_prefix + '_' + column.column).change(
-                        function()
-                        {
-                            sac_table.recaclculate();
-                        }
-                    );
-                }
-            }
-        }
+        this.recalculate();
+        return(
+            <div>
+                <WeatherDataTable
+                    weatherImpactChange={this.weatherImpactChange}
+                    weatherVisibilityChange={this.weatherVisibilityChange}
+                    metVisibility={this.state.met_visibility} />
+                <AssetSpeed
+                    assetType="Boat"
+                    assetSpeedChange={this.assetSpeedChange} />
+                <AssetSpeed
+                    assetType="Aircraft"
+                    assetSpeedChange={this.assetSpeedChange} />
+                <TargetTypeSelector
+                    possible_targets={this.possible_targets_list}
+                    targetTypeChange={this.targetTypeChange}
+                    selected={this.state.target_type} />
+                <Fatigue
+                    fatigueChanged={this.fatigueChange}
+                    fatigue={this.state.fatigue} />
+                <DataTable
+                    columns={this.state.columns}
+                    updateData={this.updateData} />
+            </div>
+        );
     }
 }

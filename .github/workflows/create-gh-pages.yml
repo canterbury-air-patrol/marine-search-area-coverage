@@ -22,7 +22,7 @@ jobs:
       - name: Capture output
         run: mkdir temp; cp -dR index.html out temp/
       - name: Switch branch
-        run: git checkout -b gh-pages origin/gh-pages
+        run: git fetch origin; git checkout -b gh-pages origin/gh-pages
       - name: Restore output
         run: cp -dR temp/* .
       - name: Create PR

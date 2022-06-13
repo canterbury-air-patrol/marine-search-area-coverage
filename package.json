@@ -1,6 +1,6 @@
 {
   "name": "@canterbury-air-patrol/marine-search-area-coverage",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Marine Search Area Coverage Calculator",
   "main": "marine-search-area-coverage.js",
   "scripts": {

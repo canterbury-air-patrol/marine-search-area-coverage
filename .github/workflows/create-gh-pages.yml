@@ -24,7 +24,7 @@ jobs:
       - name: Switch branch
         run: git fetch origin; git checkout -b gh-pages origin/gh-pages
       - name: Restore output
-        run: cp -dR temp/* .
+        run: mv temp/* .
       - name: Remove other content
         run: rm -fr node_modules
       - name: Create PR

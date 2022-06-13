@@ -25,6 +25,8 @@ jobs:
         run: git fetch origin; git checkout -b gh-pages origin/gh-pages
       - name: Restore output
         run: cp -dR temp/* .
+      - name: Remove other content
+        run: rm -fr node_modules
       - name: Create PR
         uses: peter-evans/create-pull-request@v4
         with:

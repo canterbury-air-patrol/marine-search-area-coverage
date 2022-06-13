@@ -341,7 +341,7 @@ DataTable.propTypes = {
 
 export class MarineSACTable extends React.Component {
     constructor(props) {
-        super(props)
+        super(props);
 
         this.possible_targets_list = Object.keys(marine_sweep_widths);
 
@@ -355,8 +355,8 @@ export class MarineSACTable extends React.Component {
                 "Aircraft": 0,
             },
             met_visibility: 10,
-            practical_track_spacing: {},
-            available_search_hours: {},
+            practical_track_spacing: new Map(),
+            available_search_hours: new Map(),
         };
 
         this.weatherImpactChange = this.weatherImpactChange.bind(this);
@@ -399,9 +399,12 @@ export class MarineSACTable extends React.Component {
     }
 
     updateData(asset_id, field_name, value) {
-        let current_data = this.state[field_name];
-        current_data[asset_id] = value;
-        this.setState({[field_name]: current_data});
+        if ((field_name === 'practical_track_spacing' || field_name === 'available_search_hours'))
+        {
+            let current_data = this.state[field_name];
+            current_data[asset_id] = value;
+            this.setState({[field_name]: current_data});
+        }
     }
 
     recalculate()
@@ -411,7 +414,7 @@ export class MarineSACTable extends React.Component {
 
         for (let col_idx in this.state.columns)
         {
-            let column = this.state.columns[col_idx]
+            let column = this.state.columns[col_idx];
             let search_height = column.column;
             let asset_type = column.asset_type;
             let column_name = `${asset_type}_${search_height}`;

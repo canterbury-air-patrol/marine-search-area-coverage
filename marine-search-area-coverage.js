@@ -267,6 +267,8 @@ class DataTable extends React.Component {
 
   render () {
     const rows = []
+    const assetTypes = [(<th key="head">Asset Type:</th>)]
+    const assetHeights = [(<th key="head">Height of Eye:</th>)]
 
     for (const idx in tableRows) {
       const htmlColumns = []
@@ -301,21 +303,21 @@ class DataTable extends React.Component {
       ))
     }
 
+    for (const colIdx in this.props.columns) {
+      const column = this.props.columns[colIdx]
+      assetTypes.push((<th key={colIdx}>{column.asset_type}</th>))
+      assetHeights.push((<th key={colIdx}>{column.column}</th>))
+    }
+
     return (
       <form>
         <Table>
           <thead>
             <tr>
-              <th></th>
-              <th colSpan="2">Height of Eye</th>
-              <th colSpan="2">Aircraft</th>
+              {assetTypes}
             </tr>
             <tr>
-              <th></th>
-              <th>2.4m (8ft)</th>
-              <th>4.2m (14ft)</th>
-              <th>500ft</th>
-              <th>1000ft</th>
+              {assetHeights}
             </tr>
           </thead>
           <tbody>

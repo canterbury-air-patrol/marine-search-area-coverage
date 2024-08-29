@@ -1,6 +1,6 @@
 {
   "name": "@canterbury-air-patrol/marine-search-area-coverage",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Marine Search Area Coverage Calculator",
   "main": "marine-search-area-coverage.js",
   "scripts": {
@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/canterbury-air-patrol/marine-search-area-coverage#readme",
   "dependencies": {
-    "@canterbury-air-patrol/marine-sweep-width-data": "^0.0.2",
+    "@canterbury-air-patrol/marine-sweep-width-data": "^0.0.3",
     "jquery": "^3.7.0",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",

@@ -12,6 +12,7 @@ class MarineSAC {
     this.asset_type = assetType
     this.asset_speed = 0
     this.wu = 0
+    this.speed_correction = 1
     this.fw = 0
     this.sweep_width = 0
     this.fatigue = false
@@ -25,7 +26,7 @@ class MarineSAC {
   }
 
   recaclculate () {
-    this.sweep_width = this.wu * this.fw
+    this.sweep_width = this.wu * this.speed_correction * this.fw
     if (this.fatigue) {
       this.corrected_sweep_width = this.sweep_width * 0.9
     } else {
@@ -43,11 +44,15 @@ const tableRows = [
     column_name: 'wu'
   },
   {
+    display_name: 'Speed Correction Factor (Sc)',
+    column_name: 'speed_correction'
+  },
+  {
     display_name: 'Weather Corrected Factor (Fw)',
     column_name: 'fw'
   },
   {
-    display_name: 'Sweep Width (W) (Wu x Fw)',
+    display_name: 'Sweep Width (W) (Wu x Sc x Fw)',
     column_name: 'sweep_width'
   },
   {
@@ -412,8 +417,39 @@ export class MarineSACTable extends React.Component {
       const searchHeight = column.column
       const assetType = column.asset_type
       const columnName = `${assetType}_${searchHeight}`
-
       const visibleDistanceData = targetData[assetType][searchHeight]
+      const speedCorrections = targetData.speed_corrections[assetType]
+
+      column.asset_speed = Number(this.state.assetSpeeds[column.asset_type])
+
+      let lowerSpeedSeen = null
+      let higherSpeedSeen = null
+      for (const idx in speedCorrections) {
+        const data = speedCorrections[idx]
+        if ((lowerSpeedSeen === null || data.speed > lowerSpeedSeen.speed) && data.speed <= column.asset_speed) {
+          lowerSpeedSeen = data
+        }
+        if ((higherSpeedSeen === null || data.speed < higherSpeedSeen) && data.speed >= column.asset_speed) {
+          higherSpeedSeen = data
+        }
+      }
+      if (lowerSpeedSeen === null && higherSpeedSeen !== null) {
+        column.speed_correction = higherSpeedSeen.correction
+      } else if (lowerSpeedSeen !== null && higherSpeedSeen === null) {
+        column.speed_correction = lowerSpeedSeen.correction
+      } else if (lowerSpeedSeen !== null && higherSpeedSeen !== null) {
+        if (lowerSpeedSeen.correction === higherSpeedSeen.correction) {
+          column.speed_correction = lowerSpeedSeen.correction
+        } else {
+          const speedRange = higherSpeedSeen.speed - lowerSpeedSeen.speed
+          const correctionRange = higherSpeedSeen.correction - lowerSpeedSeen.correction
+          const assetSpeedOffset = column.asset_speed - lowerSpeedSeen.speed
+          const ratio = assetSpeedOffset / speedRange
+          column.speed_correction = lowerSpeedSeen.correction + ratio * correctionRange
+        }
+      } else {
+        column.speed_correction = 1.0
+      }
 
       let highestSeenSweepWidth = 0
       let highestSeenVis = 0
@@ -428,7 +464,6 @@ export class MarineSACTable extends React.Component {
       column.fw = weatherCorrections[targetData.weather_corrections].IAMSAR[this.state.weatherImpact]
       column.fatigue = this.state.fatigue
 
-      column.asset_speed = this.state.assetSpeeds[column.asset_type]
       column.practical_track_spacing = this.state.practicalTrackSpacing[columnName]
       column.available_search_hours = this.state.availableSearchHours[columnName]
       column.recaclculate()

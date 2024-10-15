@@ -7,7 +7,7 @@ import Table from 'react-bootstrap/Table'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 class MarineSAC {
-  constructor (column, assetType) {
+  constructor(column, assetType) {
     this.column = column
     this.asset_type = assetType
     this.asset_speed = 0
@@ -25,7 +25,7 @@ class MarineSAC {
     this.whole_area_practical_track_spacing = 0
   }
 
-  recaclculate () {
+  recaclculate() {
     this.sweep_width = this.wu * this.speed_correction * this.fw
     if (this.fatigue) {
       this.corrected_sweep_width = this.sweep_width * 0.9
@@ -96,7 +96,7 @@ const tableRows = [
 ]
 
 class WeatherDataTable extends React.Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.windSpeed = 0
     this.seaHeight = 0
@@ -105,7 +105,7 @@ class WeatherDataTable extends React.Component {
     this.handleChange = this.handleChange.bind(this)
   }
 
-  updateWeatherImpact () {
+  updateWeatherImpact() {
     // Update the sea/wind impact category
     let weatherImpact = 'low'
     if (this.windSpeed >= 25 || this.seaHeight >= 1.5) {
@@ -116,7 +116,7 @@ class WeatherDataTable extends React.Component {
     this.props.weatherImpactChange(weatherImpact)
   }
 
-  handleChange (event) {
+  handleChange(event) {
     const target = event.target
     const value = target.type === 'checkbox' ? target.checked : target.value
     const name = target.name
@@ -132,22 +132,35 @@ class WeatherDataTable extends React.Component {
     }
   }
 
-  render () {
+  render() {
     return (
-        <tbody>
-          <tr>
-            <td><label htmlFor="met_visibility">Meteorological Visibility (NM)</label></td>
-            <td><input type="number" id="met_visibility" name="met_visibility" onChange={this.handleChange} defaultValue={this.props.metVisibility}></input></td>
-          </tr>
-          <tr>
-            <td><label htmlFor="wind_speed">Wind Speed (knots)</label></td>
-            <td><input type="number" id="wind_speed" name="wind_speed" onChange={this.handleChange} defaultValue={this.windSpeed}></input></td>
-          </tr>
-          <tr>
-            <td><label htmlFor="sea_height">Sea Height (meters)</label></td>
-            <td><input type="number" id="sea_height" name="sea_height" onChange={this.handleChange} defaultValue={this.seaHeight}></input></td>
-          </tr>
-        </tbody>)
+      <tbody>
+        <tr>
+          <td>
+            <label htmlFor="met_visibility">Meteorological Visibility (NM)</label>
+          </td>
+          <td>
+            <input type="number" id="met_visibility" name="met_visibility" onChange={this.handleChange} defaultValue={this.props.metVisibility}></input>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label htmlFor="wind_speed">Wind Speed (knots)</label>
+          </td>
+          <td>
+            <input type="number" id="wind_speed" name="wind_speed" onChange={this.handleChange} defaultValue={this.windSpeed}></input>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label htmlFor="sea_height">Sea Height (meters)</label>
+          </td>
+          <td>
+            <input type="number" id="sea_height" name="sea_height" onChange={this.handleChange} defaultValue={this.seaHeight}></input>
+          </td>
+        </tr>
+      </tbody>
+    )
   }
 }
 WeatherDataTable.propTypes = {
@@ -157,23 +170,27 @@ WeatherDataTable.propTypes = {
 }
 
 class TargetTypeSelector extends React.Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.handleChange = this.handleChange.bind(this)
   }
 
-  handleChange (event) {
+  handleChange(event) {
     const target = event.target
     const value = target.value
 
     this.props.targetTypeChange(value)
   }
 
-  render () {
+  render() {
     const selectObjects = []
     for (const idx in this.props.possible_targets) {
       const target = this.props.possible_targets[idx]
-      selectObjects.push(<option key={target} value={target}>{target}</option>)
+      selectObjects.push(
+        <option key={target} value={target}>
+          {target}
+        </option>
+      )
     }
     return (
       <tbody>
@@ -196,23 +213,27 @@ TargetTypeSelector.propTypes = {
 }
 
 class AssetSpeed extends React.Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.handleChange = this.handleChange.bind(this)
   }
 
-  handleChange (event) {
+  handleChange(event) {
     const target = event.target
     const value = target.value
     this.props.assetSpeedChange(this.props.assetType, value)
   }
 
-  render () {
+  render() {
     return (
       <tbody>
         <tr>
-          <td><label htmlFor={this.props.assetType + '_speed'}>{this.props.assetType} search speed (knots)</label></td>
-          <td><input type="number" name="asset_speed" onChange={this.handleChange} /></td>
+          <td>
+            <label htmlFor={this.props.assetType + '_speed'}>{this.props.assetType} search speed (knots)</label>
+          </td>
+          <td>
+            <input type="number" name="asset_speed" onChange={this.handleChange} />
+          </td>
         </tr>
       </tbody>
     )
@@ -224,23 +245,27 @@ AssetSpeed.propTypes = {
 }
 
 class Fatigue extends React.Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
     this.handleChange = this.handleChange.bind(this)
   }
 
-  handleChange (event) {
+  handleChange(event) {
     const target = event.target
     const value = target.checked
     this.props.fatigueChanged(value)
   }
 
-  render () {
+  render() {
     return (
       <tbody>
         <tr>
-          <td><label htmlFor='fatigue'>Fatigue</label></td>
-          <td><input type="checkbox" name='fatigue' id='fatigue' defaultChecked={this.props.fatigue} onChange={this.handleChange} /></td>
+          <td>
+            <label htmlFor="fatigue">Fatigue</label>
+          </td>
+          <td>
+            <input type="checkbox" name="fatigue" id="fatigue" defaultChecked={this.props.fatigue} onChange={this.handleChange} />
+          </td>
         </tr>
       </tbody>
     )
@@ -252,13 +277,13 @@ Fatigue.propTypes = {
 }
 
 class DataTable extends React.Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
 
     this.handleChange = this.handleChange.bind(this)
   }
 
-  handleChange (event) {
+  handleChange(event) {
     const target = event.target
     const value = target.value
     const name = target.id
@@ -270,64 +295,51 @@ class DataTable extends React.Component {
     this.props.updateData(assetID, columnName, value)
   }
 
-  render () {
+  render() {
     const rows = []
-    const assetTypes = [(<th key="head">Asset Type:</th>)]
-    const assetHeights = [(<th key="head">Height of Eye:</th>)]
+    const assetTypes = [<th key="head">Asset Type:</th>]
+    const assetHeights = [<th key="head">Height of Eye:</th>]
 
     for (const idx in tableRows) {
       const htmlColumns = []
-      htmlColumns.push(<th key="head" >{tableRows[idx].display_name}</th>)
+      htmlColumns.push(<th key="head">{tableRows[idx].display_name}</th>)
       for (const colIdx in this.props.columns) {
         const column = this.props.columns[colIdx]
         if (tableRows[idx].input) {
-          htmlColumns.push((
+          htmlColumns.push(
             <td key={idx + '_' + colIdx}>
-              <input type={tableRows[idx].input_type} id={column.asset_type + '_' + column.column + '_' + tableRows[idx].column_name} defaultValue={column[tableRows[idx].column_name]} onChange={this.handleChange} />
+              <input
+                type={tableRows[idx].input_type}
+                id={column.asset_type + '_' + column.column + '_' + tableRows[idx].column_name}
+                defaultValue={column[tableRows[idx].column_name]}
+                onChange={this.handleChange}
+              />
             </td>
-          ))
+          )
         } else if (tableRows[idx].column_name === 'fatigue') {
-          htmlColumns.push((
-            <td key={idx + '_' + colIdx}>
-              {column[tableRows[idx].column_name] ? 0.9 : 1.0}
-            </td>
-          ))
+          htmlColumns.push(<td key={idx + '_' + colIdx}>{column[tableRows[idx].column_name] ? 0.9 : 1.0}</td>)
         } else {
-          htmlColumns.push((
-            <td key={idx + '_' + colIdx}>
-              {column[tableRows[idx].column_name]}
-            </td>
-          ))
+          htmlColumns.push(<td key={idx + '_' + colIdx}>{column[tableRows[idx].column_name]}</td>)
         }
       }
 
-      rows.push((
-        <tr key={idx}>
-          {htmlColumns}
-        </tr>
-      ))
+      rows.push(<tr key={idx}>{htmlColumns}</tr>)
     }
 
     for (const colIdx in this.props.columns) {
       const column = this.props.columns[colIdx]
-      assetTypes.push((<th key={colIdx}>{column.asset_type}</th>))
-      assetHeights.push((<th key={colIdx}>{column.column}</th>))
+      assetTypes.push(<th key={colIdx}>{column.asset_type}</th>)
+      assetHeights.push(<th key={colIdx}>{column.column}</th>)
     }
 
     return (
       <form>
         <Table>
           <thead>
-            <tr>
-              {assetTypes}
-            </tr>
-            <tr>
-              {assetHeights}
-            </tr>
+            <tr>{assetTypes}</tr>
+            <tr>{assetHeights}</tr>
           </thead>
-          <tbody>
-            {rows}
-          </tbody>
+          <tbody>{rows}</tbody>
         </Table>
       </form>
     )
@@ -339,7 +351,7 @@ DataTable.propTypes = {
 }
 
 export class MarineSACTable extends React.Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
 
     this.possibleTargetsList = Object.keys(marineSweepWidths)
@@ -369,7 +381,8 @@ export class MarineSACTable extends React.Component {
       { asset_type: 'Boat', search_height: '8ft' },
       { asset_type: 'Boat', search_height: '14ft' },
       { asset_type: 'Aircraft', search_height: '500ft' },
-      { asset_type: 'Aircraft', search_height: '1000ft' }]
+      { asset_type: 'Aircraft', search_height: '1000ft' }
+    ]
     for (const assetIdx in defaultAssets) {
       const asset = defaultAssets[assetIdx]
       this.state.columns.push(new MarineSAC(asset.search_height, asset.asset_type))
@@ -378,37 +391,37 @@ export class MarineSACTable extends React.Component {
     }
   }
 
-  weatherImpactChange (newWeatherImpact) {
+  weatherImpactChange(newWeatherImpact) {
     this.setState({ weatherImpact: newWeatherImpact })
   }
 
-  weatherVisibilityChange (metVisibility) {
+  weatherVisibilityChange(metVisibility) {
     this.setState({ metVisibility: parseInt(metVisibility) })
   }
 
-  targetTypeChange (newTargetType) {
+  targetTypeChange(newTargetType) {
     this.setState({ targetType: newTargetType })
   }
 
-  assetSpeedChange (assetType, speed) {
+  assetSpeedChange(assetType, speed) {
     const currentAssetSpeeds = this.state.assetSpeeds
     currentAssetSpeeds[assetType] = speed
     this.setState({ assetSpeeds: currentAssetSpeeds })
   }
 
-  fatigueChange (value) {
+  fatigueChange(value) {
     this.setState({ fatigue: value })
   }
 
-  updateData (assetID, fieldName, value) {
-    if ((fieldName === 'practicalTrackSpacing' || fieldName === 'availableSearchHours')) {
+  updateData(assetID, fieldName, value) {
+    if (fieldName === 'practicalTrackSpacing' || fieldName === 'availableSearchHours') {
       const currentData = this.state[fieldName]
       currentData[assetID] = value
       this.setState({ [fieldName]: currentData })
     }
   }
 
-  recalculate () {
+  recalculate() {
     // Update the uncorrected sweep width and weather correct factors
     const targetData = marineSweepWidths[this.state.targetType]
 
@@ -470,32 +483,18 @@ export class MarineSACTable extends React.Component {
     }
   }
 
-  render () {
+  render() {
     this.recalculate()
     return (
       <div>
         <Table>
-          <WeatherDataTable
-            weatherImpactChange={this.weatherImpactChange}
-            weatherVisibilityChange={this.weatherVisibilityChange}
-            metVisibility={this.state.metVisibility} />
-          <AssetSpeed
-            assetType="Boat"
-            assetSpeedChange={this.assetSpeedChange} />
-          <AssetSpeed
-            assetType="Aircraft"
-            assetSpeedChange={this.assetSpeedChange} />
-          <TargetTypeSelector
-            possible_targets={this.possibleTargetsList}
-            targetTypeChange={this.targetTypeChange}
-            selected={this.state.targetType} />
-          <Fatigue
-            fatigueChanged={this.fatigueChange}
-            fatigue={this.state.fatigue} />
+          <WeatherDataTable weatherImpactChange={this.weatherImpactChange} weatherVisibilityChange={this.weatherVisibilityChange} metVisibility={this.state.metVisibility} />
+          <AssetSpeed assetType="Boat" assetSpeedChange={this.assetSpeedChange} />
+          <AssetSpeed assetType="Aircraft" assetSpeedChange={this.assetSpeedChange} />
+          <TargetTypeSelector possible_targets={this.possibleTargetsList} targetTypeChange={this.targetTypeChange} selected={this.state.targetType} />
+          <Fatigue fatigueChanged={this.fatigueChange} fatigue={this.state.fatigue} />
         </Table>
-        <DataTable
-          columns={this.state.columns}
-          updateData={this.updateData} />
+        <DataTable columns={this.state.columns} updateData={this.updateData} />
       </div>
     )
   }

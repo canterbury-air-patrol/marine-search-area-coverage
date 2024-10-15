@@ -5,7 +5,7 @@
   "main": "marine-search-area-coverage.js",
   "scripts": {
     "build": "esbuild marinesac.js --bundle --loader:.js=jsx --outdir=out --minify",
-    "check": "eslint *.js",
+    "check": "eslint *.js && prettier -c *.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "http-server -a localhost -p 8000"
   },
@@ -41,6 +41,7 @@
     "eslint": "^9.12.0",
     "eslint-plugin-react": "^7.37.1",
     "globals": "^15.11.0",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "prettier": "^3.3.3"
   }
 }

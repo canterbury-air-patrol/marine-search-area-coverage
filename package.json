@@ -1,9 +1,15 @@
 {
   "name": "@canterbury-air-patrol/marine-search-area-coverage",
-  "version": "0.5.1",
+  "version": "0.6.1",
   "description": "Marine Search Area Coverage Calculator",
-  "main": "marine-search-area-coverage.js",
+  "main": "dist/marine-search-area-coverage.js",
+  "module": "dist/marine-search-area-coverage.mjs",
+  "types": "dist/marine-seach-area-coverage.d.ts",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
+    "bundle": "tsup",
     "build": "esbuild marinesac.tsx --bundle --outdir=out --minify",
     "check": "eslint *.tsx && prettier -c *.tsx",
     "test": "echo \"Error: no test specified\" && exit 1",

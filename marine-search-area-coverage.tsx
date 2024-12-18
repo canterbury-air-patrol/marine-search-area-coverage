@@ -1,13 +1,28 @@
 import { marine_sweep_widths as marineSweepWidths, marine_sweep_width_weather_corrections as weatherCorrections } from '@canterbury-air-patrol/marine-sweep-width-data'
 
 import React from 'react'
-import PropTypes from 'prop-types'
 
 import Table from 'react-bootstrap/Table'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 class MarineSAC {
-  constructor(column, assetType) {
+  column: string
+  asset_type: string
+  asset_speed: number
+  wu: number
+  speed_correction: number
+  fw: number
+  sweep_width: number
+  fatigue: boolean
+  corrected_sweep_width: number
+  practical_track_spacing: number
+  search_area: number
+  search_hours: number
+  available_search_hours: number
+  modified_area: number
+  whole_area_practical_track_spacing: number
+
+  constructor(column: string, assetType: string) {
     this.column = column
     this.asset_type = assetType
     this.asset_speed = 0
@@ -38,7 +53,14 @@ class MarineSAC {
   }
 }
 
-const tableRows = [
+interface TableRowsInterface {
+  display_name: string
+  column_name: string
+  input?: boolean
+  input_type?: string
+}
+
+const tableRows: TableRowsInterface[] = [
   {
     display_name: 'Uncorrected Sweep Width (Wu) `NM`',
     column_name: 'wu'
@@ -95,8 +117,17 @@ const tableRows = [
   }
 ]
 
-class WeatherDataTable extends React.Component {
-  constructor(props) {
+interface WeatherDataTableProps {
+  weatherImpactChange: (impact: string) => void
+  weatherVisibilityChange: (vis: number) => void
+  metVisibility: number
+}
+
+class WeatherDataTable extends React.Component<WeatherDataTableProps, never> {
+  windSpeed: number
+  seaHeight: number
+
+  constructor(props: WeatherDataTableProps) {
     super(props)
     this.windSpeed = 0
     this.seaHeight = 0
@@ -116,17 +147,17 @@ class WeatherDataTable extends React.Component {
     this.props.weatherImpactChange(weatherImpact)
   }
 
-  handleChange(event) {
+  handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const target = event.target
-    const value = target.type === 'checkbox' ? target.checked : target.value
+    const value = target.value
     const name = target.name
     if (name === 'met_visibility') {
-      this.props.weatherVisibilityChange(value)
+      this.props.weatherVisibilityChange(parseFloat(value))
     } else {
       if (name === 'wind_speed') {
-        this.windSpeed = value
+        this.windSpeed = parseFloat(value)
       } else if (name === 'sea_height') {
-        this.seaHeight = value
+        this.seaHeight = parseFloat(value)
       }
       this.updateWeatherImpact()
     }
@@ -163,19 +194,20 @@ class WeatherDataTable extends React.Component {
     )
   }
 }
-WeatherDataTable.propTypes = {
-  weatherImpactChange: PropTypes.func.isRequired,
-  weatherVisibilityChange: PropTypes.func.isRequired,
-  metVisibility: PropTypes.number.isRequired
+
+interface TargetTypeSelectorProps {
+  possible_targets: string[]
+  targetTypeChange: (type: string) => void
+  selected: string
 }
 
-class TargetTypeSelector extends React.Component {
-  constructor(props) {
+class TargetTypeSelector extends React.Component<TargetTypeSelectorProps, never> {
+  constructor(props: TargetTypeSelectorProps) {
     super(props)
     this.handleChange = this.handleChange.bind(this)
   }
 
-  handleChange(event) {
+  handleChange(event: React.ChangeEvent<HTMLSelectElement>) {
     const target = event.target
     const value = target.value
 
@@ -206,22 +238,22 @@ class TargetTypeSelector extends React.Component {
     )
   }
 }
-TargetTypeSelector.propTypes = {
-  possible_targets: PropTypes.array.isRequired,
-  targetTypeChange: PropTypes.func.isRequired,
-  selected: PropTypes.string.isRequired
+
+interface AssetSpeedProps {
+  assetType: string
+  assetSpeedChange: (assetType: string, speed: number) => void
 }
 
-class AssetSpeed extends React.Component {
-  constructor(props) {
+class AssetSpeed extends React.Component<AssetSpeedProps, never> {
+  constructor(props: AssetSpeedProps) {
     super(props)
     this.handleChange = this.handleChange.bind(this)
   }
 
-  handleChange(event) {
+  handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const target = event.target
     const value = target.value
-    this.props.assetSpeedChange(this.props.assetType, value)
+    this.props.assetSpeedChange(this.props.assetType, parseFloat(value))
   }
 
   render() {
@@ -239,18 +271,19 @@ class AssetSpeed extends React.Component {
     )
   }
 }
-AssetSpeed.propTypes = {
-  assetType: PropTypes.string.isRequired,
-  assetSpeedChange: PropTypes.func.isRequired
+
+interface FatigueProps {
+  fatigueChanged: (fatigue: boolean) => void
+  fatigue: boolean
 }
 
-class Fatigue extends React.Component {
-  constructor(props) {
+class Fatigue extends React.Component<FatigueProps, never> {
+  constructor(props: FatigueProps) {
     super(props)
     this.handleChange = this.handleChange.bind(this)
   }
 
-  handleChange(event) {
+  handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const target = event.target
     const value = target.checked
     this.props.fatigueChanged(value)
@@ -271,19 +304,20 @@ class Fatigue extends React.Component {
     )
   }
 }
-Fatigue.propTypes = {
-  fatigueChanged: PropTypes.func.isRequired,
-  fatigue: PropTypes.bool.isRequired
+
+interface DataTableProps {
+  columns: MarineSAC[]
+  updateData: (assetID: string, column: string, value: number) => void
 }
 
-class DataTable extends React.Component {
-  constructor(props) {
+class DataTable extends React.Component<DataTableProps, never> {
+  constructor(props: DataTableProps) {
     super(props)
 
     this.handleChange = this.handleChange.bind(this)
   }
 
-  handleChange(event) {
+  handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const target = event.target
     const value = target.value
     const name = target.id
@@ -292,7 +326,7 @@ class DataTable extends React.Component {
     const assetID = idParts.slice(0, 2).join('_')
     const columnName = idParts.slice(2).join('_')
 
-    this.props.updateData(assetID, columnName, value)
+    this.props.updateData(assetID, columnName, parseFloat(value))
   }
 
   render() {
@@ -311,6 +345,7 @@ class DataTable extends React.Component {
               <input
                 type={tableRows[idx].input_type}
                 id={column.asset_type + '_' + column.column + '_' + tableRows[idx].column_name}
+                // @ts-expect-error need to accept the column name from tableRows
                 defaultValue={column[tableRows[idx].column_name]}
                 onChange={this.handleChange}
               />
@@ -319,6 +354,7 @@ class DataTable extends React.Component {
         } else if (tableRows[idx].column_name === 'fatigue') {
           htmlColumns.push(<td key={idx + '_' + colIdx}>{column[tableRows[idx].column_name] ? 0.9 : 1.0}</td>)
         } else {
+          // @ts-expect-error need to accept the column name from tableRows
           htmlColumns.push(<td key={idx + '_' + colIdx}>{column[tableRows[idx].column_name]}</td>)
         }
       }
@@ -345,13 +381,24 @@ class DataTable extends React.Component {
     )
   }
 }
-DataTable.propTypes = {
-  columns: PropTypes.array.isRequired,
-  updateData: PropTypes.func.isRequired
+
+interface MarineSACTableState {
+  columns: MarineSAC[]
+  targetType: string
+  fatigue: boolean
+  weatherImpact: string
+  assetSpeeds: {
+    [assetType: string]: number
+  }
+  metVisibility: number
+  practicalTrackSpacing: Map<string, number>
+  availableSearchHours: Map<string, number>
 }
 
-export class MarineSACTable extends React.Component {
-  constructor(props) {
+export class MarineSACTable extends React.Component<never, MarineSACTableState> {
+  possibleTargetsList: string[]
+
+  constructor(props: never) {
     super(props)
 
     this.possibleTargetsList = Object.keys(marineSweepWidths)
@@ -366,8 +413,8 @@ export class MarineSACTable extends React.Component {
         Aircraft: 0
       },
       metVisibility: 10,
-      practicalTrackSpacing: new Map(),
-      availableSearchHours: new Map()
+      practicalTrackSpacing: new Map<string, number>(),
+      availableSearchHours: new Map<string, number>()
     }
 
     this.weatherImpactChange = this.weatherImpactChange.bind(this)
@@ -386,38 +433,49 @@ export class MarineSACTable extends React.Component {
     for (const assetIdx in defaultAssets) {
       const asset = defaultAssets[assetIdx]
       this.state.columns.push(new MarineSAC(asset.search_height, asset.asset_type))
-      this.state.practicalTrackSpacing[`${asset.asset_type}_${asset.search_height}`] = 0
-      this.state.availableSearchHours[`${asset.asset_type}_${asset.search_height}`] = 0
+      this.state.practicalTrackSpacing.set(`${asset.asset_type}_${asset.search_height}`, 0)
+      this.state.availableSearchHours.set(`${asset.asset_type}_${asset.search_height}`, 0)
     }
   }
 
-  weatherImpactChange(newWeatherImpact) {
+  weatherImpactChange(newWeatherImpact: string) {
     this.setState({ weatherImpact: newWeatherImpact })
   }
 
-  weatherVisibilityChange(metVisibility) {
-    this.setState({ metVisibility: parseInt(metVisibility) })
+  weatherVisibilityChange(metVisibility: number) {
+    this.setState({ metVisibility: metVisibility })
   }
 
-  targetTypeChange(newTargetType) {
+  targetTypeChange(newTargetType: string) {
     this.setState({ targetType: newTargetType })
   }
 
-  assetSpeedChange(assetType, speed) {
-    const currentAssetSpeeds = this.state.assetSpeeds
-    currentAssetSpeeds[assetType] = speed
-    this.setState({ assetSpeeds: currentAssetSpeeds })
+  assetSpeedChange(assetType: string, speed: number) {
+    this.setState(function (oldState) {
+      const currentAssetSpeeds = oldState.assetSpeeds
+      currentAssetSpeeds[assetType] = speed
+      return { assetSpeeds: currentAssetSpeeds }
+    })
   }
 
-  fatigueChange(value) {
+  fatigueChange(value: boolean) {
     this.setState({ fatigue: value })
   }
 
-  updateData(assetID, fieldName, value) {
-    if (fieldName === 'practicalTrackSpacing' || fieldName === 'availableSearchHours') {
-      const currentData = this.state[fieldName]
-      currentData[assetID] = value
-      this.setState({ [fieldName]: currentData })
+  updateData(assetID: string, fieldName: string, value: number) {
+    if (fieldName === 'practicalTrackSpacing') {
+      this.setState(function (oldState) {
+        const currentData = oldState.practicalTrackSpacing
+        currentData.set(assetID, value)
+        return { practicalTrackSpacing: currentData }
+      })
+    }
+    if (fieldName === 'availableSearchHours') {
+      this.setState(function (oldState) {
+        const currentData = oldState.availableSearchHours
+        currentData.set(assetID, value)
+        return { availableSearchHours: currentData }
+      })
     }
   }
 
@@ -430,55 +488,71 @@ export class MarineSACTable extends React.Component {
       const searchHeight = column.column
       const assetType = column.asset_type
       const columnName = `${assetType}_${searchHeight}`
-      const visibleDistanceData = targetData[assetType][searchHeight]
-      const speedCorrections = targetData.speed_corrections[assetType]
+      const visibleDistanceData =
+        assetType == 'Boat'
+          ? targetData.Boat[searchHeight]
+          : assetType === 'Heliocopter'
+            ? targetData.Helicopter[searchHeight]
+            : assetType === 'Aircraft'
+              ? targetData.Aircraft[searchHeight]
+              : null
+      const speedCorrections = assetType === 'Aircraft' ? targetData.speed_corrections.Aircraft : assetType === 'Helicopter' ? targetData.speed_corrections.Helicopter : null
 
       column.asset_speed = Number(this.state.assetSpeeds[column.asset_type])
 
       let lowerSpeedSeen = null
       let higherSpeedSeen = null
-      for (const idx in speedCorrections) {
-        const data = speedCorrections[idx]
-        if ((lowerSpeedSeen === null || data.speed > lowerSpeedSeen.speed) && data.speed <= column.asset_speed) {
-          lowerSpeedSeen = data
-        }
-        if ((higherSpeedSeen === null || data.speed < higherSpeedSeen) && data.speed >= column.asset_speed) {
-          higherSpeedSeen = data
-        }
-      }
-      if (lowerSpeedSeen === null && higherSpeedSeen !== null) {
-        column.speed_correction = higherSpeedSeen.correction
-      } else if (lowerSpeedSeen !== null && higherSpeedSeen === null) {
-        column.speed_correction = lowerSpeedSeen.correction
-      } else if (lowerSpeedSeen !== null && higherSpeedSeen !== null) {
-        if (lowerSpeedSeen.correction === higherSpeedSeen.correction) {
-          column.speed_correction = lowerSpeedSeen.correction
-        } else {
-          const speedRange = higherSpeedSeen.speed - lowerSpeedSeen.speed
-          const correctionRange = higherSpeedSeen.correction - lowerSpeedSeen.correction
-          const assetSpeedOffset = column.asset_speed - lowerSpeedSeen.speed
-          const ratio = assetSpeedOffset / speedRange
-          column.speed_correction = lowerSpeedSeen.correction + ratio * correctionRange
-        }
-      } else {
+      if (speedCorrections === null) {
         column.speed_correction = 1.0
+      } else {
+        for (const idx in speedCorrections) {
+          const data = speedCorrections[idx]
+          if ((lowerSpeedSeen === null || data.speed > lowerSpeedSeen.speed) && data.speed <= column.asset_speed) {
+            lowerSpeedSeen = data
+          }
+          if ((higherSpeedSeen === null || data.speed < higherSpeedSeen.speed) && data.speed >= column.asset_speed) {
+            higherSpeedSeen = data
+          }
+        }
+        if (lowerSpeedSeen === null && higherSpeedSeen !== null) {
+          column.speed_correction = higherSpeedSeen.correction
+        } else if (lowerSpeedSeen !== null && higherSpeedSeen === null) {
+          column.speed_correction = lowerSpeedSeen.correction
+        } else if (lowerSpeedSeen !== null && higherSpeedSeen !== null) {
+          if (lowerSpeedSeen.correction === higherSpeedSeen.correction) {
+            column.speed_correction = lowerSpeedSeen.correction
+          } else {
+            const speedRange = higherSpeedSeen.speed - lowerSpeedSeen.speed
+            const correctionRange = higherSpeedSeen.correction - lowerSpeedSeen.correction
+            const assetSpeedOffset = column.asset_speed - lowerSpeedSeen.speed
+            const ratio = assetSpeedOffset / speedRange
+            column.speed_correction = lowerSpeedSeen.correction + ratio * correctionRange
+          }
+        } else {
+          column.speed_correction = 1.0
+        }
       }
 
       let highestSeenSweepWidth = 0
       let highestSeenVis = 0
-      for (const idx in visibleDistanceData) {
-        const data = visibleDistanceData[idx]
-        if (data.vis <= this.state.metVisibility && data.vis > highestSeenVis) {
-          highestSeenSweepWidth = data.sw
-          highestSeenVis = data.vis
+      if (visibleDistanceData) {
+        for (const idx in visibleDistanceData) {
+          const data = visibleDistanceData[idx]
+          if (data.vis <= this.state.metVisibility && data.vis > highestSeenVis) {
+            highestSeenSweepWidth = data.sw
+            highestSeenVis = data.vis
+          }
         }
       }
       column.wu = highestSeenSweepWidth
-      column.fw = weatherCorrections[targetData.weather_corrections].IAMSAR[this.state.weatherImpact]
+      const weatherCorrectionsTable = targetData.weather_corrections === 'large' ? weatherCorrections.large : weatherCorrections.small
+      if (this.state.weatherImpact === 'low' || this.state.weatherImpact === 'medium' || this.state.weatherImpact === 'high') {
+        column.fw = weatherCorrectionsTable.IAMSAR[this.state.weatherImpact]
+      }
       column.fatigue = this.state.fatigue
 
-      column.practical_track_spacing = this.state.practicalTrackSpacing[columnName]
-      column.available_search_hours = this.state.availableSearchHours[columnName]
+      column.practical_track_spacing = this.state.practicalTrackSpacing.get(columnName)!
+      column.available_search_hours = this.state.availableSearchHours.get(columnName)!
       column.recaclculate()
     }
   }

@@ -34,7 +34,7 @@
   "homepage": "https://github.com/canterbury-air-patrol/marine-search-area-coverage#readme",
   "dependencies": {
     "@canterbury-air-patrol/marine-sweep-width-data": "^0.2.0",
-    "jquery": "^3.7.0",
+    "jquery": "^4.0.0",
     "prop-types": "^15.8.1",
     "react-bootstrap": "^2.8.0"
   },
